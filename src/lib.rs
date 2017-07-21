@@ -53,6 +53,7 @@ pub enum CursorVisibility {
 ///
 /// Even if you _can_ change the color content of a color, you still access the
 /// eight colors with these names.
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Color {
     /// Black
     Black,
@@ -101,6 +102,21 @@ fn i16_to_color(val: i16) -> Option<Color> {
         6 => Some(Cyan),
         7 => Some(White),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod color_tests {
+    use super::*;
+    #[test]
+    fn test_color_i32_conversion() {
+        use Color::*;
+        let colors = [Black, Red, Green, Yellow, Blue, Magenta, Cyan, White];
+        for &color in colors.iter() {
+            if i16_to_color(color_to_i16(color)).unwrap() != color {
+                panic!(color);
+            }
+        }
     }
 }
 
