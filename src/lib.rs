@@ -17,6 +17,18 @@
 
 extern crate pancurses;
 
+// TODO: Attributes
+
+// TODO: Delete Char
+
+// TODO: Delete Line
+
+// TODO: Scrolling
+
+// TODO: Timeout
+
+// TODO: un_get_key
+
 use std::panic::*;
 
 /// The three options you can pass to `EasyCurses::set_cursor_visibility`. Note
