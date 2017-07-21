@@ -13,7 +13,7 @@ fn main() {
         easy.set_cursor_visibility(CursorVisibility::Invisible);
         easy.noecho();
         easy.print("hello.\n");
-        easy.set_character_break(false);
+        //easy.set_character_break(false);
         let c = easy.get_char();
         easy.print(&format!("{:?}\n", c));
         easy.get_char();

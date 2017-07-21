@@ -211,6 +211,12 @@ impl EasyCurses {
         }
     }
 
+    /// On Win32 systems this allows you to set the title of the PDcurses
+    /// window. On other systems this does nothing at all.
+    pub fn set_title_win32(&mut self, title: &str) {
+        pancurses::set_title(title);
+    }
+
     /// Attempts to assign a new cursor visibility. If this is successful you
     /// get a `Some` back with the old setting inside. If this fails you get a
     /// `None` back. For more info see
@@ -233,7 +239,7 @@ impl EasyCurses {
     /// In character break mode (cbreak), characters typed by the user are made
     /// available immediately, and erase/kill/backspace character processing is
     /// not performed. When this mode is off (nocbreak) user input is not
-    /// available to the application until a newline has been typed. The initial
+    /// available to the application until a newline has been typed. The default
     /// mode is not specified (but happens to often be cbreak). The bool result
     /// indicates if the operation was successful or not.
     ///
@@ -255,21 +261,36 @@ impl EasyCurses {
         pancurses::noecho();
     }
 
+    // TODO: pancurses::set_blink?
+
+    // TODO: pancurses::resize_term?
+
     /// Checks if the current terminal supports the use of colors.
     pub fn is_color_terminal(&mut self) -> bool {
         self.color_support
     }
 
     /// Sets the current color pair of the window. Output at any location will
-    /// use this pair until a new pair is set.
+    /// use this pair until a new pair is set. Does nothing if the terminal does
+    /// not support colors in the first place.
     pub fn set_color_pair(&mut self, pair: ColorPair) {
-        self.win.color_set(pair.0);
+        if self.color_support {
+            self.win.color_set(pair.0);
+        }
     }
 
     /// Prints the given string into the window. The bool indicates if the
     /// operation was successful or not.
     pub fn print(&mut self, string: &str) -> bool {
         to_bool(self.win.printw(string))
+    }
+
+    /// Refreshes the window's appearance on the screen. With some
+    /// implementations you don't need to call this, the screen will refresh
+    /// itself on its own. However, for portability, you should call this at the
+    /// end of each draw cycle.
+    pub fn refresh(&mut self) -> bool {
+        to_bool(self.win.refresh())
     }
 
     /// Plays an audible beep if possible, if not the screen is flashed. If
