@@ -9,7 +9,7 @@ extern crate easycurses;
 use easycurses::*;
 
 fn main() {
-    unwind_safe_curses(|easy|{
+    preserve_panic_message(|easy|{
         easy.set_cursor_visibility(CursorVisibility::Invisible);
         easy.noecho();
         easy.print("hello.");
