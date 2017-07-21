@@ -132,10 +132,12 @@ fn to_bool(curses_bool: i32) -> bool {
 /// Normally, if your program panics while in curses mode the panic message
 /// prints immediately and then is destroyed before you can see it by the
 /// automatic cleanup of curses mode. Instead, this runs the function you pass
-/// it within `catch_unwind` and when there's an error it attempts to downcast
-/// the result into a message you can print out or log or whatever you like.
-/// Regardless of what kind of `Result` you get back, curses mode is fully
-/// cleaned up and shut down by the time this function returns.
+/// it within `catch_unwind` and when there's a panic it catches the panic value
+/// and attempts to downcast it into a `String` you can print out or log or
+/// whatever you like. Since a panic value can be anything at all this won't
+/// always succeed, thus the `Option` wrapper on the `Err` case. Regardless of
+/// what of `Result` you get back, curses mode will be fully cleaned up and shut
+/// down by the time this function returns.
 ///
 /// Note that you *don't* have to use this if you just want your terminal
 /// restored to normal when your progam panics while in curses mode. That is
@@ -254,6 +256,14 @@ impl EasyCurses {
         }
     }
 
+    /// Enables special key processing from buttons such as the keypad and arrow
+    /// keys. This defaults to `false`. You probably want to set it to `true`.
+    /// If it's not on and the user presses a special key then get_key will
+    /// return will do nothing or give `ERR`.
+    pub fn set_keypad_enabled(&mut self, use_keypad: bool) -> bool {
+        to_bool(self.win.keypad(use_keypad))
+    }
+
     /// Disables input echoing. There is currently no way to re-enable it later
     /// because `pancurses` doesn't implement
     /// [echo](http://pubs.opengroup.org/onlinepubs/7908799/xcurses/echo.html).
@@ -279,10 +289,41 @@ impl EasyCurses {
         }
     }
 
+    /// Returns the number of rows and columns available in the window.
+    pub fn get_row_col_count(&mut self) -> (i32, i32) {
+        self.win.get_max_yx()
+    }
+
+    /// Moves the virtual cursor to the row and column specified, relative to
+    /// the top left ("notepad" space). Does not move the terminal's dispayed
+    /// cursor (if any) until `refresh` is also called.
+    pub fn move_rc(&mut self, row: i32, col: i32) -> bool {
+        to_bool(self.win.mv(row, col))
+    }
+
+    /// Moves the virtual cursor to the x and y specified, relative to the
+    /// bottom left ("cartesian" space). Does not move the terminal's displayed
+    /// cursor (if any) until `refresh` is also called.
+    pub fn move_xy(&mut self, x: i32, y: i32) -> bool {
+        let row_count = self.win.get_max_y();
+        to_bool(self.win.mv(row_count - (y + 1), x))
+    }
+
     /// Prints the given string into the window. The bool indicates if the
     /// operation was successful or not.
     pub fn print(&mut self, string: &str) -> bool {
         to_bool(self.win.printw(string))
+    }
+
+    /// Prints the given character into the window. The bool indicates if the
+    /// operation was successful or not.
+    pub fn print_char(&mut self, character: char) -> bool {
+        to_bool(self.win.addch(character))
+    }
+
+    /// Clears the entire screen.
+    pub fn clear(&mut self) -> bool {
+        to_bool(self.win.clear())
     }
 
     /// Refreshes the window's appearance on the screen. With some
@@ -305,8 +346,8 @@ impl EasyCurses {
         pancurses::flash();
     }
 
-    /// Gets a character from the curses input buffer.
-    pub fn get_char(&mut self) -> Option<pancurses::Input> {
+    /// Gets a keypress from the curses input buffer.
+    pub fn get_key(&mut self) -> Option<pancurses::Input> {
         self.win.getch()
     }
 
