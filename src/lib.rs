@@ -17,10 +17,6 @@
 
 extern crate pancurses;
 
-// TODO: Attributes
-
-// TODO: Scrolling
-
 use std::panic::*;
 
 /// The three options you can pass to `EasyCurses::set_cursor_visibility`. Note
@@ -149,32 +145,6 @@ impl ColorPair {
     /// really have to.
     fn fgbg_pairid(fg: i16, bg: i16) -> i16 {
         1 + (8 * fg + bg)
-    }
-}
-
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum Attribute {
-    Bold,
-    Blink, //noPD, does a weird highlight
-    Dim,
-    Italic,
-    Normal,
-    ReverseColor,
-    Strikeout,
-    Underline,
-}
-
-fn to_pancurses_attribute(attribute: Attribute) -> pancurses::Attribute {
-    use Attribute::*;
-    match attribute {
-        Bold => pancurses::Attribute::Bold,
-        Blink => pancurses::Attribute::Blink,
-        Dim => pancurses::Attribute::Dim,
-        Italic => pancurses::Attribute::Italic,
-        Normal => pancurses::Attribute::Normal,
-        ReverseColor => pancurses::Attribute::Reverse,
-        Strikeout => pancurses::Attribute::Strikeout,
-        Underline => pancurses::Attribute::Underline,
     }
 }
 
@@ -332,8 +302,6 @@ impl EasyCurses {
         pancurses::noecho();
     }
 
-    // TODO: pancurses::set_blink?
-
     // TODO: pancurses::resize_term?
 
     /// Checks if the current terminal supports the use of colors.
@@ -350,29 +318,24 @@ impl EasyCurses {
         }
     }
 
-    /// Enables or disables the attribute specified according to the bool
-    /// specified for all future output of the screen. The result is if the
-    /// operation was successful. Doesn't affect any other attributes of the
-    /// screen.
-    pub fn set_attribute(&mut self, attr: Attribute, on: bool) -> bool {
-        let pancurses_attr = to_pancurses_attribute(attr);
-        to_bool(if on {
-            self.win.attron(pancurses_attr)
+    /// Enables or disables bold text for all future input. The bool is if the
+    /// operation was successful or not.
+    pub fn set_bold(&mut self, bold_on: bool) -> bool {
+        to_bool(if bold_on {
+            self.win.attron(pancurses::Attribute::Bold)
         } else {
-            self.win.attroff(pancurses_attr)
+            self.win.attroff(pancurses::Attribute::Bold)
         })
     }
 
-    /// Given a slice of attributes, sets all of them to be on and all other
-    /// attributes to be off. The result is if the operation succeeded.
-    pub fn set_all_attributes(&mut self, attributes_on: &[Attribute]) -> bool {
-        let target_attributes = attributes_on
-            .iter()
-            .map(|&a| to_pancurses_attribute(a))
-            .fold(pancurses::Attributes::new(), |attr_set, new_attr| {
-                attr_set | new_attr
-            });
-        to_bool(self.win.attrset(target_attributes))
+    /// Enables or disables unerlined text for all future input. The bool is if
+    /// the operation was successful or not.
+    pub fn set_underline(&mut self, underline_on: bool) -> bool {
+        to_bool(if underline_on {
+            self.win.attron(pancurses::Attribute::Underline)
+        } else {
+            self.win.attroff(pancurses::Attribute::Underline)
+        })
     }
 
     /// Returns the number of rows and columns available in the window.
@@ -393,6 +356,20 @@ impl EasyCurses {
     pub fn move_xy(&mut self, x: i32, y: i32) -> bool {
         let row_count = self.win.get_max_y();
         to_bool(self.win.mv(row_count - (y + 1), x))
+    }
+
+    /// When scrolling is enabled, any attempt to move off the bottom margin
+    /// will cause lines within the scrolling region to scroll up one line. If a
+    /// scrolling region is set but scolling is not enabled then attempts to go
+    /// off the bottom will just print nothing instead. Use `set_scroll_region`
+    /// to control the size of the scrolling region.
+    pub fn set_scrolling(&mut self, scrolling: bool) -> bool {
+        to_bool(self.win.scrollok(scrolling))
+    }
+
+    /// Sets the top and bottom margins of the scrolling region.
+    pub fn set_scroll_region(&mut self, top: i32, bottom: i32) -> bool {
+        to_bool(self.win.setscrreg(top, bottom))
     }
 
     /// Prints the given string into the window. The bool indicates if the
