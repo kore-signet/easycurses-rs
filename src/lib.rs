@@ -19,15 +19,7 @@ extern crate pancurses;
 
 // TODO: Attributes
 
-// TODO: Delete Char
-
-// TODO: Delete Line
-
 // TODO: Scrolling
-
-// TODO: Timeout
-
-// TODO: un_get_key
 
 use std::panic::*;
 
@@ -363,6 +355,21 @@ impl EasyCurses {
         to_bool(self.win.addch(character))
     }
 
+    /// Deletes the character under the cursor. Characters after it on same the
+    /// line are pulled left one position and the final character cell is left
+    /// blank. The cursor position does not move. Returns if the operation was
+    /// successful or not.
+    pub fn delete_char(&mut self) -> bool {
+        to_bool(self.win.delch())
+    }
+
+    /// Deletes the line under the cursor. Lines below are moved up one line and
+    /// the final line is left blank. The cursor position does not move. Returns
+    /// if the operation was successful or not.
+    pub fn delete_line(&mut self) -> bool {
+        to_bool(self.win.deleteln())
+    }
+
     /// Clears the entire screen.
     pub fn clear(&mut self) -> bool {
         to_bool(self.win.clear())
@@ -388,8 +395,16 @@ impl EasyCurses {
         pancurses::flash();
     }
 
-    /// Gets a keypress from the curses input buffer.
-    pub fn get_key(&mut self) -> Option<pancurses::Input> {
+    /// This controls if `get_input` is blocking or not. Negative values cause
+    /// `get_input` to block indefinitely. Zero causes `get_input` to simply be
+    /// non-blocking. Positive values cause `get_input` to block for up to the
+    /// given number of miliseconds. The default mode is indefinite blocking.
+    pub fn timeout(&mut self, miliseconds: i32) {
+        self.win.timeout(miliseconds);
+    }
+
+    /// Gets an `Input` from the curses input buffer. Depending on the `timeout` setting that y
+    pub fn get_input(&mut self) -> Option<pancurses::Input> {
         self.win.getch()
     }
 
@@ -397,5 +412,11 @@ impl EasyCurses {
     /// by the program.
     pub fn flush_input(&mut self) {
         pancurses::flushinp();
+    }
+
+    /// Pushes an `Input` value into the input stack so that it will be returned
+    /// by the next call to `get_input`.
+    pub fn un_get_input(&mut self, input: &pancurses::Input) -> bool {
+        to_bool(self.win.ungetch(input))
     }
 }
