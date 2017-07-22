@@ -13,7 +13,10 @@ fn main() {
         easy.set_cursor_visibility(CursorVisibility::Invisible);
         easy.set_keypad_enabled(true);
         easy.noecho();
+        let test_attribute = Attribute::Underline;
+        easy.set_attribute(test_attribute, true);
         easy.print("hello.\n");
+        easy.set_attribute(test_attribute, false);
         //easy.set_character_break(false);
         let c = easy.get_input();
         easy.print(&format!("{:?}\n", c));
