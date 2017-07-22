@@ -127,6 +127,7 @@ mod color_tests {
 }
 
 /// A color pair for a character cell on the screen.
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ColorPair(i16);
 
 impl ColorPair {
@@ -148,6 +149,32 @@ impl ColorPair {
     /// really have to.
     fn fgbg_pairid(fg: i16, bg: i16) -> i16 {
         1 + (8 * fg + bg)
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Attribute {
+    Bold,
+    Blink, //noPD, does a weird highlight
+    Dim,
+    Italic,
+    Normal,
+    ReverseColor,
+    Strikeout,
+    Underline,
+}
+
+fn to_pancurses_attribute(attribute: Attribute) -> pancurses::Attribute {
+    use Attribute::*;
+    match attribute {
+        Bold => pancurses::Attribute::Bold,
+        Blink => pancurses::Attribute::Blink,
+        Dim => pancurses::Attribute::Dim,
+        Italic => pancurses::Attribute::Italic,
+        Normal => pancurses::Attribute::Normal,
+        ReverseColor => pancurses::Attribute::Reverse,
+        Strikeout => pancurses::Attribute::Strikeout,
+        Underline => pancurses::Attribute::Underline,
     }
 }
 
@@ -321,6 +348,31 @@ impl EasyCurses {
         if self.color_support {
             self.win.color_set(pair.0);
         }
+    }
+
+    /// Enables or disables the attribute specified according to the bool
+    /// specified for all future output of the screen. The result is if the
+    /// operation was successful. Doesn't affect any other attributes of the
+    /// screen.
+    pub fn set_attribute(&mut self, attr: Attribute, on: bool) -> bool {
+        let pancurses_attr = to_pancurses_attribute(attr);
+        to_bool(if on {
+            self.win.attron(pancurses_attr)
+        } else {
+            self.win.attroff(pancurses_attr)
+        })
+    }
+
+    /// Given a slice of attributes, sets all of them to be on and all other
+    /// attributes to be off. The result is if the operation succeeded.
+    pub fn set_all_attributes(&mut self, attributes_on: &[Attribute]) -> bool {
+        let target_attributes = attributes_on
+            .iter()
+            .map(|&a| to_pancurses_attribute(a))
+            .fold(pancurses::Attributes::new(), |attr_set, new_attr| {
+                attr_set | new_attr
+            });
+        to_bool(self.win.attrset(target_attributes))
     }
 
     /// Returns the number of rows and columns available in the window.
