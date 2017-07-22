@@ -108,8 +108,9 @@ fn i16_to_color(val: i16) -> Option<Color> {
 #[cfg(test)]
 mod color_tests {
     use super::*;
+
     #[test]
-    fn test_color_i32_conversion() {
+    fn test_color_i32_conversion_identity() {
         use Color::*;
         let colors = [Black, Red, Green, Yellow, Blue, Magenta, Cyan, White];
         for &color in colors.iter() {
@@ -117,6 +118,19 @@ mod color_tests {
                 panic!(color);
             }
         }
+    }
+
+    #[test]
+    fn test_color_i32_matches_color_constants() {
+        use Color::*;
+        assert!(color_to_i16(Black) == pancurses::COLOR_BLACK);
+        assert!(color_to_i16(Red) == pancurses::COLOR_RED);
+        assert!(color_to_i16(Green) == pancurses::COLOR_GREEN);
+        assert!(color_to_i16(Yellow) == pancurses::COLOR_YELLOW);
+        assert!(color_to_i16(Blue) == pancurses::COLOR_BLUE);
+        assert!(color_to_i16(Magenta) == pancurses::COLOR_MAGENTA);
+        assert!(color_to_i16(Cyan) == pancurses::COLOR_CYAN);
+        assert!(color_to_i16(White) == pancurses::COLOR_WHITE);
     }
 }
 
