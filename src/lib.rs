@@ -200,6 +200,10 @@ pub fn preserve_panic_message<F: FnOnce(&mut EasyCurses) -> R + UnwindSafe, R>(
 /// if your program panics and aborts (obviously). So, don't abort the program
 /// while curses is active, or your terminal session will just be ruined.
 pub struct EasyCurses {
+    /// This is the inner pancurses `Window` that easycurses wraps over. This is
+    /// only intended to be used as a last resort if you really want to call
+    /// something that's not here. Under normal circumstances you shouldn't need
+    /// to touch this field at all.
     pub win: pancurses::Window,
     color_support: bool,
 }
@@ -214,8 +218,9 @@ impl Drop for EasyCurses {
 }
 
 impl EasyCurses {
-    /// Initializes the curses system so that you can begin using curses. Note
-    /// that since this uses
+    /// Initializes the curses system so that you can begin using curses. This
+    /// isn't called "new" because you shouldn't be making more than one
+    /// EasyCurses value at the same time ever. Note that since this uses
     /// [initscr](http://pubs.opengroup.org/onlinepubs/7908799/xcurses/initscr.html),
     /// any error during initialization will generally cause the program to
     /// print an error message to stdout and then immediately exit. C libs are
@@ -295,11 +300,15 @@ impl EasyCurses {
         to_bool(self.win.keypad(use_keypad))
     }
 
-    /// Disables input echoing. There is currently no way to re-enable it later
-    /// because `pancurses` doesn't implement
-    /// [echo](http://pubs.opengroup.org/onlinepubs/7908799/xcurses/echo.html).
-    pub fn noecho(&mut self) {
-        pancurses::noecho();
+    /// Enables or disables the automatic echoing of input into the window as
+    /// the user types. Default to on, but you probably want it to be off most
+    /// of the time. The result is if the requested change was successful.
+    pub fn set_echo(&mut self, echoing: bool) -> bool {
+        to_bool(if echoing {
+            pancurses::echo()
+        } else {
+            pancurses::noecho()
+        })
     }
 
     // TODO: pancurses::resize_term?
