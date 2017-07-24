@@ -1,3 +1,5 @@
+[![Crates](https://img.shields.io/crates/v/easycurses.svg)]()
+
 # EasyCurses
 
 A rust crate to smooth over the pain points of working with curses. Because it's
