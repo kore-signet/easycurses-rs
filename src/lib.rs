@@ -200,7 +200,7 @@ pub fn preserve_panic_message<F: FnOnce(&mut EasyCurses) -> R + UnwindSafe, R>(
 /// if your program panics and aborts (obviously). So, don't abort the program
 /// while curses is active, or your terminal session will just be ruined.
 pub struct EasyCurses {
-    win: pancurses::Window,
+    pub win: pancurses::Window,
     color_support: bool,
 }
 
