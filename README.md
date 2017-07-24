@@ -1,6 +1,10 @@
 # EasyCurses
 
-A rust crate to smooth over the pain points of working with curses.
+A rust crate to smooth over the pain points of working with curses. Because it's
+based on [pancurses](https://github.com/ihalila/pancurses), it works equally
+well with on both windows and unix computers.
+
+Here's a basic demo:
 
 ```rust
 extern crate easycurses;
@@ -9,17 +13,20 @@ use easycurses::*;
 
 fn main() {
     let mut easy = EasyCurses::initialize_system();
-    easy.print("Hello world.");
     easy.set_cursor_visibility(CursorVisibility::Invisible);
     easy.set_echo(false);
+    easy.print("Hello world.");
+    easy.refresh();
     easy.get_input();
 }
 ```
 
 Unfortunately when you've got curses active rust's normal panic printing doesn't
 end up working right. The panic message prints before curses does cleanup, and
-then it's erased by the cleanup faster than you can read it. I've got you
-covered there too.
+then it's erased by the cleanup faster than you can read it.
+
+I've got you covered with a wrapper function that does the `catch_unwind` for
+you:
 
 ```rust
 extern crate easycurses;
@@ -28,9 +35,10 @@ use easycurses::*;
 
 fn main() {
     preserve_panic_message(|easy| {
-        easy.print("Hello world.");
         easy.set_cursor_visibility(CursorVisibility::Invisible);
         easy.set_echo(false);
+        easy.print("Hello world.");
+        easy.refresh();
         easy.get_input();
         panic!("oh no");
     }).unwrap_or_else(|e| match e {
