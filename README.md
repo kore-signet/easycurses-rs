@@ -1,4 +1,4 @@
-[![Crates](https://img.shields.io/crates/v/easycurses.svg)]()
+[![Crates](https://img.shields.io/crates/v/easycurses.svg)](https://crates.io/crates/easycurses)
 
 # EasyCurses
 
