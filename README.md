@@ -67,11 +67,10 @@ I would characterize the library as largely stable. It's missing at least one
 feature that I'd like to see added (insert_char) but that's because pancurses
 itself lacks that at the moment.
 
-As laid out somewhere during the [high-quality
-rust](https://github.com/rust-lang/rust-roadmap/issues/9) roadmap goal
-discusssions, a crate can't rightly call itself 1.0 unless all the things it
-depends on are themselves 1.0, so no matter what this crate won't actaully go to
-1.0 before `pancurses` does.
+As laid out somewhere during the [1.0-level crate
+discussions](https://github.com/rust-lang/rust-roadmap/issues/11), a crate can't
+rightly call itself 1.0 unless all the things it depends on are themselves 1.0,
+so no matter what this crate won't actaully go to 1.0 before `pancurses` does.
 
 ## License
 
