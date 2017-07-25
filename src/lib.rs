@@ -14,6 +14,12 @@
 //! that the first one is already dropped. Initialization and shutdown of curses
 //! will get out of balance and your terminal will probably be left in a very
 //! unusable state.
+//!
+//! Similarly, the library can only perform proper automatic cleanup if Rust is
+//! allowed to run the `Drop` implementation. This happens normally, and during
+//! an unwinding pancic, but if you ever abort the program (either because you
+//! compiled with `panic=abort` or because you panic during an unwind) you lose
+//! the cleanup safety. So, don't do that.
 
 extern crate pancurses;
 
