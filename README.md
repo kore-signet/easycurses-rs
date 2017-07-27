@@ -6,60 +6,35 @@ A rust crate to smooth over the pain points of working with curses. Because it's
 based on [pancurses](https://github.com/ihalila/pancurses), it works equally
 well with on both windows and unix computers.
 
-Here's a basic demo:
+Examples are available in the `examples/` directory. The files are throughly
+commented, and you can run any of them with `cargo` to see them in action.
 
-```rust
-extern crate easycurses;
-
-use easycurses::*;
-
-fn main() {
-    let mut easy = EasyCurses::initialize_system();
-    easy.set_cursor_visibility(CursorVisibility::Invisible);
-    easy.set_echo(false);
-    easy.print("Hello world.");
-    easy.refresh();
-    easy.get_input();
-}
+```
+cargo run --example <fileName>
 ```
 
-Unfortunately when you've got curses active rust's normal panic printing doesn't
-end up working right. The panic message prints before curses does cleanup, and
-then it's erased by the cleanup faster than you can read it.
+## Terminal Safety
 
-I've got you covered with a wrapper function that does the `catch_unwind` for
-you:
+Normally when you're using curses there's a big danger that your program will
+leave the terminal in an unsable state where things don't print properly and
+stuff if your program exits on accident and you don't get your chance to call
+`endwin` properly. EasyCurses will safely cleanup the terminal and restore it to
+a useable state when your program closes via its `Drop` trait. No worries.
 
-```rust
-extern crate easycurses;
+The catch is that you do have to only _ever_ have one `EasyCurses` value active
+at once. Having two at once would let the initialization and shutdown get out of
+balance, and things would go bad. Currently there's nothing enforcing this at
+all, but in the future there might be a way to enforce this without burdening
+the users of the library. Note that it is safe to drop `EasyCurses` entirely
+(shutting down curses in the process) and then make a new one (starting a fresh
+new curses session).
 
-use easycurses::*;
-
-fn main() {
-    preserve_panic_message(|easy| {
-        easy.set_cursor_visibility(CursorVisibility::Invisible);
-        easy.set_echo(false);
-        easy.print("Hello world.");
-        easy.refresh();
-        easy.get_input();
-        panic!("oh no");
-    }).unwrap_or_else(|e| match e {
-        Some(errmsg) => println!("Error Occurred: {}", errmsg),
-        None => println!("There was an error, but no error message."),
-    });
-}
-```
-
-It is currently suggested in the _strongest possible terms_ that you not attempt
-to initialize curses while it's already active, but this isn't actually
-enforced. In the future I might make this into a harder error if there's a way
-to make it not disruptive to the normal library user (who is assumed to be well
-behaved). There's _probably_ no way to do it statically, so it will just have to
-be a runtime panic the moment you try to double-initialize.
-
-Similarly, if you ever abort the program the cleanup guarantee goes right out
-the window, since it's based on `Drop` working properly. So, just don't ever
-abort the program.
+Similarly, if you ever abort the program entirely there's no chance for cleanup,
+since an abort is an instant termination of the process. So, just don't ever
+compile with `panic=abort`, or use
+[exit](https://doc.rust-lang.org/std/process/fn.exit.html), or panic during an
+unwind, or anything else like that. At least not while an EasyCurses value is in
+scope somewhere within your call stack.
 
 ## Stability
 
